@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Details</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to bottom, #f1f9fc, #d4eaf3);
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-top: 30px;
+            font-size: 2.5em;
+        }
+        form {
+            width: 80%;
+            margin: 20px auto;
+            background-color: #ffffff;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        label {
+            font-size: 1.2em;
+            color: #2980b9;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1em;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        /* Navbar Styles */
+        .navbar {
+            background-color: #4a90e2;
+            display: flex;
+            justify-content: center;
+            padding: 10px 0;
+        }
+        .navbar ul {
+            list-style: none;
+            display: flex;
+            margin: 0;
+            padding: 0;
+        }
+        .navbar li {
+            padding: 10px 20px;
+        }
+        .navbar a {
+            text-decoration: none;
+            color: white;
+            font-weight: bold;
+        }
+        .navbar a:hover {
+            background-color: #357ab7;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+        <ul>
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    {% endwith %}
+    <!-- Navigation Bar -->
+    <div class="navbar">
+        <ul>
+            <li><a href="home.html">Home</a></li>
+            <li><a href="about_us.html">About Us</a></li>
+            <li><a href="services.html">Services</a></li>
+            <li><a href="contact_us.html">Contact Us</a></li>
+            <li><a href="logout.html">Logout</a></li>
+        </ul>
+    </div>
+
+    <h1>Payment Information</h1>
+    <form action="{{ url_for('payment') }}" method='POST'>
+        <!-- Amount Paid -->
+        <label for="amount-paid">Amount Paid:</label>
+        <input type="number" id="amount-paid" name='AmountPaid' value="{{amtpaid}}" readonly><br><br>
+
+        <!-- Payment Mode -->
+        <label for="payment-mode">Payment Mode:</label>
+        <select id="payment-mode" name='PaymentMode' required>
+            <option value='Credit Card'>Credit Card</option>
+            <option value='Cash'>Cash</option>
+        </select><br><br>
+
+        <!-- Payment Date -->
+        <label for="payment-date">Payment Date:</label>
+        <input type="date" id="payment-date" name='PaymentDate' required><br><br>
+
+        <!-- Payment Status -->
+        <label for="payment-status">Payment Status:</label>
+        <select id="payment-status" name='PaymentStatus' required>
+            <option value="Prepaid">Prepaid</option>
+            <option value="Postpaid">Postpaid</option>
+        </select><br><br>
+
+        <button type="submit">Submit Payment</button>
+    </form>
+</body>
+</html>

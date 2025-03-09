@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Room Booking</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to bottom, #f1f9fc, #d4eaf3);
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-top: 30px;
+            font-size: 2.5em;
+        }
+        form {
+            width: 80%;
+            margin: 20px auto;
+            background-color: #ffffff;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        label {
+            font-size: 1.2em;
+            color: #2980b9;
+        }
+        select, input {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1em;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .alert {
+            margin: 20px auto;
+            padding: 10px;
+            width: 80%;
+            color: #ffffff;
+            background-color: #e74c3c;
+            text-align: center;
+            border-radius: 5px;
+            font-size: 1.2em;
+        }
+        .button-group {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .button-group a {
+            text-decoration: none;
+            color: white;
+            background-color: #2c3e50;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 1.2em;
+        }
+        .button-group a:hover {
+            background-color: #34495e;
+        }
+    </style>
+</head>
+<body>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+        <ul>
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    {% endwith %}
+    <h1>Room Availability</h1>
+
+    <form action="{{ url_for('room_availability') }}" method="POST">
+        <label for="room-type">Select Room Type:</label>
+        <select id="room-type" name='RoomType'>
+            <option value="single">Single</option>
+            <option value="double">Double</option>
+            <option value="suite">Suite</option>
+            <option value="deluxe">Deluxe</option>
+        </select><br><br>
+
+        <label for="check-in">Check-in Date:</label>
+        <input type="date" id="check-in" name='CheckinDate' required><br><br>
+
+        <label for="check-out">Check-out Date:</label>
+        <input type="date" id="check-out" name='CheckoutDate' required><br><br>
+
+        <button type="submit">Check Availability</button>
+    </form>
+
+
+    <div class="button-group">
+        <a href="{{ url_for('home') }}">Return to Home Page</a>
+    </div>
+</body>
+</html>

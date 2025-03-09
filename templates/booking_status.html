@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Status</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+            background: linear-gradient(to right, #f1f9fc, #d4eaf3);
+        }
+        h1 {
+            text-align: center;
+            color: #2980b9;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 80%;
+            margin: 0 auto;
+            border-collapse: collapse;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        table th, table td {
+            padding: 15px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+        table th {
+            background-color: #2980b9;
+            color: white;
+            font-size: 1.2em;
+        }
+        table td {
+            font-size: 1.1em;
+            color: #2c3e50;
+        }
+        .occupied {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .available {
+            background-color: #2ecc71;
+            color: white;
+        }
+        .button-group {
+            text-align: center;
+            margin-top: 30px;
+        }
+        .button-group a {
+            text-decoration: none;
+            background-color: #2c3e50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 1.2em;
+        }
+        .button-group a:hover {
+            background-color: #34495e;
+        }
+    </style>
+    <script>
+        // Example booking data
+        const bookingData = [
+            { roomNumber: "101", roomType: "Single", occupant: "John Doe", status: "Occupied" },
+            { roomNumber: "102", roomType: "Double", occupant: "Jane Smith", status: "Occupied" },
+            { roomNumber: "103", roomType: "Deluxe", occupant: "Available", status: "Available" },
+            { roomNumber: "104", roomType: "Suite", occupant: "Available", status: "Available" }
+        ];
+
+        // Function to display booking data
+        function displayBookingStatus() {
+            const tableBody = document.getElementById("booking-data");
+            bookingData.forEach(data => {
+                const rowClass = data.status === "Occupied" ? "occupied" : "available";
+                const row = `
+                    <tr class="${rowClass}">
+                        <td>${data.roomNumber}</td>
+                        <td>${data.roomType}</td>
+                        <td>${data.occupant}</td>
+                        <td>${data.status}</td>
+                    </tr>
+                `;
+                tableBody.innerHTML += row;
+            });
+        }
+
+        // Call the function on page load
+        window.onload = displayBookingStatus;
+    </script>
+</head>
+<body>
+    <h1>Booking Status</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Room Number</th>
+                <th>Room Type</th>
+                <th>Occupant</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="booking-data">
+            <!-- Booking data will be populated here -->
+        </tbody>
+    </table>
+
+    <div class="button-group">
+        <a href="index.html">Return to Home Page</a>
+    </div>
+</body>
+</html>

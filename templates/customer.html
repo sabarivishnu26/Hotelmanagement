@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Details</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to bottom, #f1f9fc, #d4eaf3);
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-top: 30px;
+            font-size: 2.5em;
+        }
+        form {
+            width: 80%;
+            margin: 20px auto;
+            background-color: #ffffff;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        label {
+            font-size: 1.2em;
+            color: #2980b9;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1em;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .button-group {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .button-group a {
+            text-decoration: none;
+            color: white;
+            background-color: #2c3e50;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 1.2em;
+        }
+        .button-group a:hover {
+            background-color: #34495e;
+        }
+    </style>
+    <script>
+        // Function to generate a random customer ID
+        function generateCustomerID() {
+            const customerID = Math.floor(1000 + Math.random() * 9000); // Format: CUSTXXXX
+            document.getElementById('customer-id').value = customerID;
+        }
+    </script>
+</head>
+<body onload="generateCustomerID()">
+    <h1>Customer Information</h1>
+    <form action="{{url_for('roombooking')}}" method="POST">
+        <!-- Customer ID (readonly, generated automatically) -->
+        <label for="customer-id">Customer ID:</label>
+        <input type="text" id="customer-id" name="customer_id" readonly><br><br>
+        
+        <!-- Customer Name -->
+        <label for="name">Name:</label>
+        <input type="text" id="name" name='Name' required><br><br>  <!-- Corrected name attribute -->
+        
+        <!-- Customer Contact -->
+        <label for="contact">Contact Number:</label>
+        <input type="text" id="contact" name='CustomerContact' required><br><br>  <!-- Corrected name attribute -->
+        
+        <!-- Customer Email -->
+        <label for="email">Email:</label>
+        <input type="email" id="email" name='Email' required><br><br>
+        
+        <!-- Customer Address -->
+        <label for="address">Address:</label>
+        <textarea id="address" name='Address' rows="3" cols="30" required></textarea><br><br>
+        
+        <button type="submit">Proceed to Room Booking</button>
+    </form>
+
+    <div class="button-group">
+        <a href="index.html">Return to Home Page</a>
+    </div>
+</body>
+</html>

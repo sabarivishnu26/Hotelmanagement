@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Management - Home</title>
+    <style>
+        /* General Styles */
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f8ff;
+            color: #2c3e50;
+        }
+        h1 {
+            text-align: center;
+            color: #4a90e2;
+            padding: 20px 0;
+            font-size: 2.5em;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .container {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 20px;
+            gap: 20px;
+        }
+        .left, .center, .right {
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .left:hover, .center:hover, .right:hover {
+            transform: translateY(-5px);
+        }
+
+        /* Left Section */
+        .left {
+            flex: 1;
+            background-color: #badc58;
+            color: #2c3e50;
+        }
+        .left h2 {
+            color: #27ae60;
+            font-size: 1.6em;
+            margin-bottom: 20px;
+        }
+        .dropdown {
+            margin-top: 20px;
+        }
+        select {
+            width: 80%;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #16a085;
+            font-size: 16px;
+            background-color: #ecf0f1;
+            transition: background-color 0.3s ease;
+        }
+        select:hover {
+            background-color: #bdc3c7;
+        }
+        .left img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin-top: 10px;
+            transition: transform 0.3s ease;
+        }
+        .left img:hover {
+            transform: scale(1.05);
+        }
+
+        /* Center Section */
+        .center {
+            flex: 2;
+            background-color: #dff9fb;
+            text-align: center;
+            color: #34495e;
+        }
+        .center h2 {
+            color: #2980b9;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+        }
+        .center p {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+        .center img {
+            width: 90%;
+            height: auto;
+            border-radius: 8px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease;
+        }
+        .center img:hover {
+            transform: scale(1.05);
+        }
+
+        /* About Section */
+        .about {
+            padding: 20px 40px;
+            background-color: #ffef96;
+            color: #444;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin: 20px;
+            text-align: center;
+        }
+        .about h2 {
+            color: #e67e22;
+            font-size: 1.6em;
+            margin-bottom: 15px;
+        }
+        .about img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin-top: 10px;
+            transition: transform 0.3s ease;
+        }
+        .about img:hover {
+            transform: scale(1.05);
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            background-color: #34495e;
+            color: #ecf0f1;
+            padding: 20px 0;
+            margin-top: 20px;
+            font-size: 1.2em;
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .left, .center {
+                flex: none;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome to Our Hotel Management System</h1>
+    <div class="container",width=300>
+        <!-- Left Section -->
+        <div class="left">
+            <h2>Select an Option</h2>
+            <div class="dropdown">
+                <select onchange="navigateToPage(this)">
+                    <option value="">-- Select an Option --</option>
+                    <option value="{{url_for('roombooking')}}">Room Booking</option>
+                    <option value="{{url_for('checkroom_availability')}}">Check Room availablity</option>
+                    <option value="booking_status.html">Booking Status</option>
+                    <option value="services.html">Services</option>
+                    <option value="{{url_for('updatecustomerdetails')}}">Update Customer</option>
+                    <option value="update_payment.html">Update Payment</option>
+                    <option value="update_rooms.html">Update Rooms</option>
+                    <option value="update_staff.html">Update Staff</option>
+                    <option value="staff.html">Staff</option>
+                    <option value="services_update.html">Update Services</option>
+                </select>
+            </div>
+            <!-- Image -->
+            <img src="service_options.jpg" alt="Service Options">
+        </div>
+
+        <!-- Center Section -->
+        <div class="center">
+            <h2>Room Availability</h2>
+            <p><strong>Available Rooms:</strong> 15</p>
+            <p><strong>Room Types:</strong></p>
+            <ul>
+                <li>Single Rooms: 5</li>
+                <li>Double Rooms: 4</li>
+                <li>Deluxe Rooms: 3</li>
+                <li>Suites: 3</li>
+            </ul>
+            <!-- Image -->
+            <img src="room_availability.jpg" alt="Available Rooms">
+        </div>
+    </div>
+
+    <!-- About Us Section -->
+    <div class="about">
+        <h2>About Us</h2>
+        <p>Welcome to our hotel! We provide the best hospitality services with a variety of room types to meet your needs. Enjoy our additional services like spa, gym, and room service, all aimed at making your stay comfortable and memorable.</p>
+        <!-- Image -->
+        <img src="hotel_about.jpg" alt="About Our Hotel">
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        &copy; 2025 Hotel Management System. All rights reserved.
+    </footer>
+
+    <script>
+        // JavaScript to handle dropdown navigation
+        function navigateToPage(select) {
+            const url = select.value;
+            if (url) {
+                window.location.href = url;
+            }
+        }
+    </script>
+</body>
+</html>

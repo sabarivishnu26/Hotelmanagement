@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Rooms</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #e8f4f8;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-top: 20px;
+        }
+        form {
+            max-width: 600px;
+            margin: 20px auto;
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #34495e;
+        }
+        .options, .sub-options {
+            margin: 10px 0;
+        }
+        input[type="text"], input[type="number"], button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            border: 1px solid #16a085;
+            font-size: 16px;
+        }
+        button {
+            background-color: #27ae60;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #1abc9c;
+        }
+        .back {
+            text-align: center;
+            margin-top: 10px;
+        }
+        .back a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Update Room Details</h1>
+    <form>
+        <label for="room_id">Room ID</label>
+        <input type="text" id="room_id" name="room_id" placeholder="Enter Room ID" required>
+
+        <label for="room_type">Room Type</label>
+        <div class="options">
+            <label><input type="radio" name="room_type" value="single" onclick="showSubOptions('single')"> Single</label>
+            <label><input type="radio" name="room_type" value="double" onclick="showSubOptions('double')"> Double</label>
+            <label><input type="radio" name="room_type" value="suite" onclick="showSubOptions('suite')"> Suite</label>
+            <label><input type="radio" name="room_type" value="deluxe" onclick="showSubOptions('deluxe')"> Deluxe</label>
+        </div>
+
+        <!-- Sub-options dynamically displayed -->
+        <div id="single-options" class="sub-options hidden">
+            <label><input type="radio" name="single_type" value="basic"> Basic</label>
+            <label><input type="radio" name="single_type" value="premium"> Premium</label>
+        </div>
+        <div id="double-options" class="sub-options hidden">
+            <label><input type="radio" name="double_type" value="standard"> Standard</label>
+            <label><input type="radio" name="double_type" value="luxury"> Luxury</label>
+        </div>
+        <div id="suite-options" class="sub-options hidden">
+            <label><input type="radio" name="suite_type" value="junior"> Junior Suite</label>
+            <label><input type="radio" name="suite_type" value="executive"> Executive Suite</label>
+        </div>
+        <div id="deluxe-options" class="sub-options hidden">
+            <label><input type="radio" name="deluxe_type" value="family"> Family Deluxe</label>
+            <label><input type="radio" name="deluxe_type" value="honeymoon"> Honeymoon Deluxe</label>
+        </div>
+
+        <label for="price">Price (Per Night)</label>
+        <input type="number" id="price" name="price" placeholder="Enter Price" required>
+
+        <button type="submit">Update Room</button>
+    </form>
+    <div class="back">
+        <a href="index.html">Return to Home Page</a>
+    </div>
+
+    <script>
+        // Show the relevant sub-options based on room type
+        function showSubOptions(type) {
+            const subOptions = ['single', 'double', 'suite', 'deluxe'];
+            subOptions.forEach(option => {
+                const element = document.getElementById(`${option}-options`);
+                element.classList.add('hidden');
+            });
+            document.getElementById(`${type}-options`).classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment and Booking Summary</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+            background-color: #f9f9e3;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        h1 {
+            text-align: center;
+            color: #8e44ad;
+            margin-top: 20px;
+            width: 100%;
+        }
+        .container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 1200px;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .summary-container {
+            width: 45%;
+            max-width: 600px;
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .summary-container h2 {
+            text-align: center;
+            color: #8e44ad;
+            margin-bottom: 15px;
+        }
+        .summary-details {
+            margin-bottom: 15px;
+        }
+        .summary-details label {
+            font-weight: bold;
+            display: inline-block;
+            width: 150px;
+            color: #34495e;
+        }
+        .summary-details span {
+            font-size: 16px;
+            color: #555;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        button {
+            background-color: #8e44ad;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #9b59b6;
+        }
+        .back {
+            text-align: center;
+            margin-top: 10px;
+        }
+        .back a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        /* Responsive Design for smaller screens */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                align-items: center;
+            }
+            .summary-container {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Payment and Booking Summary</h1>
+
+    <div class="container">
+        <!-- Payment Summary (Left Side) -->
+        <div class="summary-container">
+            <h2>Payment Summary</h2>
+            <div class="summary-details">
+                <label>Payee Name:</label>
+                <span id="payee-name">John Doe</span>
+            </div>
+            <div class="summary-details">
+                <label>Mode of Payment:</label>
+                <span id="payment-mode">Credit Card</span>
+            </div>
+            <div class="summary-details">
+                <label>Booking Date:</label>
+                <span id="booking-date">01/13/2025</span>
+            </div>
+            <div class="summary-details">
+                <label>Room Details:</label>
+                <span id="room-details">Room Number: 101, Type: Single</span>
+            </div>
+        </div>
+
+        <!-- Booking Summary (Right Side) -->
+        <div class="summary-container">
+            <h2>Booking Summary</h2>
+            <div class="summary-details">
+                <label>Customer Name:</label>
+                <span id="customer-name">John Doe</span>
+            </div>
+            <div class="summary-details">
+                <label>Room Type:</label>
+                <span id="room-type">Single</span>
+            </div>
+            <div class="summary-details">
+                <label>Booking Status:</label>
+                <span id="booking-status">Confirmed</span>
+            </div>
+            <button id="booking-summary" onclick="displayBookingSummary()">View Full Booking Details</button>
+        </div>
+    </div>
+
+    <div class="back">
+        <a href="index.html">Return to Home Page</a>
+    </div>
+
+    <script>
+        // Function to populate payment details
+        function displayPaymentSummary() {
+            const payeeName = 'John Doe'; // Example data
+            const paymentMode = 'Credit Card'; // Example data
+            const bookingDate = new Date().toLocaleDateString(); // Example data
+            const roomDetails = 'Room Number: 101, Type: Single'; // Example data
+
+            document.getElementById('payee-name').innerText = payeeName;
+            document.getElementById('payment-mode').innerText = paymentMode;
+            document.getElementById('booking-date').innerText = bookingDate;
+            document.getElementById('room-details').innerText = roomDetails;
+        }
+
+        // Function to populate booking summary
+        function displayBookingSummary() {
+            const customerName = 'John Doe'; // Example data
+            const roomType = 'Single'; // Example data
+            const bookingStatus = 'Confirmed'; // Example data
+
+            document.getElementById('customer-name').innerText = customerName;
+            document.getElementById('room-type').innerText = roomType;
+            document.getElementById('booking-status').innerText = bookingStatus;
+
+            alert('Displaying full booking summary...');
+        }
+
+        // Call the function to populate the payment summary
+        displayPaymentSummary();
+    </script>
+
+</body>
+</html>

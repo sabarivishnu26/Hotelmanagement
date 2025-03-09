@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Payment</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #fff3e6;
+        }
+        h1 {
+            text-align: center;
+            color: #e67e22;
+            margin-top: 20px;
+        }
+        form {
+            max-width: 600px;
+            margin: 20px auto;
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #34495e;
+        }
+        .options, .sub-options {
+            margin: 10px 0;
+        }
+        input[type="text"], input[type="datetime-local"], button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            border: 1px solid #e67e22;
+            font-size: 16px;
+        }
+        button {
+            background-color: #e67e22;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #d35400;
+        }
+        .back {
+            text-align: center;
+            margin-top: 10px;
+        }
+        .back a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Update Payment Details</h1>
+    <form>
+        <label for="payment_id">Payment ID</label>
+        <input type="text" id="payment_id" name="payment_id" placeholder="Enter Payment ID" required>
+
+        <label for="payment_method">Payment Method</label>
+        <div class="options">
+            <label><input type="radio" name="payment_method" value="credit_card" onclick="showSubOptions('credit_card')"> Credit Card</label>
+            <label><input type="radio" name="payment_method" value="cash" onclick="showSubOptions('cash')"> Cash</label>
+            <label><input type="radio" name="payment_method" value="upi" onclick="showSubOptions('upi')"> UPI</label>
+        </div>
+
+        <div id="credit_card-options" class="sub-options hidden">
+            <label><input type="radio" name="credit_card_type" value="visa"> Visa</label>
+            <label><input type="radio" name="credit_card_type" value="mastercard"> MasterCard</label>
+        </div>
+        <div id="cash-options" class="sub-options hidden">
+            <label>Cash payment does not require sub-options.</label>
+        </div>
+        <div id="upi-options" class="sub-options hidden">
+            <label><input type="radio" name="upi_type" value="google_pay"> Google Pay</label>
+            <label><input type="radio" name="upi_type" value="phone_pe"> PhonePe</label>
+        </div>
+
+        <label for="payee_name">Payee Name</label>
+        <input type="text" id="payee_name" name="payee_name" placeholder="Enter Payee Name" required>
+
+        <label for="time">Payment Time</label>
+        <input type="datetime-local" id="time" name="time" required>
+
+        <button type="submit">Update Payment</button>
+    </form>
+    <div class="back">
+        <a href="index.html">Return to Home Page</a>
+    </div>
+
+    <script>
+        function showSubOptions(type) {
+            const subOptions = ['credit_card', 'cash', 'upi'];
+            subOptions.forEach(option => {
+                const element = document.getElementById(`${option}-options`);
+                element.classList.add('hidden');
+            });
+            document.getElementById(`${type}-options`).classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>

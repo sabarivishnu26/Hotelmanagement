@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Services</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to right, #f1f9fc, #d4eaf3);
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #2980b9;
+        }
+        .service-selection {
+            margin: 20px;
+            padding: 10px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .button-group {
+            text-align: center;
+            margin-top: 30px;
+        }
+        .button-group a {
+            text-decoration: none;
+            background-color: #2980b9;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 1.2em;
+        }
+        .button-group a:hover {
+            background-color: #34495e;
+        }
+        .staff-details {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            display: none;
+        }
+    </style>
+    <script>
+        // Staff and room assignments based on selected service
+        const staffDetails = {
+            laundry: [
+                { staffName: "Alice", room: "101", workTime: "9:00 AM - 12:00 PM" },
+                { staffName: "Bob", room: "102", workTime: "2:00 PM - 5:00 PM" }
+            ],
+            roomService: [
+                { staffName: "Charlie", room: "103", workTime: "10:00 AM - 1:00 PM" },
+                { staffName: "Diana", room: "104", workTime: "4:00 PM - 7:00 PM" }
+            ],
+            spa: [
+                { staffName: "Eva", room: "105", workTime: "11:00 AM - 2:00 PM" },
+                { staffName: "Frank", room: "106", workTime: "3:00 PM - 6:00 PM" }
+            ],
+            gym: [
+                { staffName: "Grace", room: "107", workTime: "6:00 AM - 9:00 AM" },
+                { staffName: "Hannah", room: "108", workTime: "8:00 AM - 11:00 AM" }
+            ]
+        };
+
+        function showStaffDetails(service) {
+            // Hide staff details by default
+            const staffDetailsSection = document.getElementById('staff-details');
+            staffDetailsSection.style.display = "block"; // Show the section
+
+            // Clear previous details
+            staffDetailsSection.innerHTML = `<h3>Staff attending to ${service.charAt(0).toUpperCase() + service.slice(1)}:</h3>`;
+
+            if (staffDetails[service]) {
+                staffDetails[service].forEach(detail => {
+                    const staffInfo = `
+                        <p><strong>Staff Name:</strong> ${detail.staffName}</p>
+                        <p><strong>Room:</strong> ${detail.room}</p>
+                        <p><strong>Working Time:</strong> ${detail.workTime}</p>
+                        <hr>
+                    `;
+                    staffDetailsSection.innerHTML += staffInfo;
+                });
+            } else {
+                staffDetailsSection.innerHTML += "<p>No details available.</p>";
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>Additional Services</h1>
+    <form>
+        <div class="service-selection">
+            <p>Select the services you are interested in:</p>
+            
+            <input type="checkbox" id="laundry" name="service" value="laundry" onclick="showStaffDetails('laundry')">
+            <label for="laundry">Laundry</label><br>
+            
+            <input type="checkbox" id="room-service" name="service" value="room-service" onclick="showStaffDetails('roomService')">
+            <label for="room-service">Room Service</label><br>
+            
+            <input type="checkbox" id="spa" name="service" value="spa" onclick="showStaffDetails('spa')">
+            <label for="spa">Spa</label><br>
+            
+            <input type="checkbox" id="gym" name="service" value="gym" onclick="showStaffDetails('gym')">
+            <label for="gym">Gym</label><br><br>
+        </div>
+
+        <button type="submit">Submit</button>
+    </form>
+
+    <div id="staff-details" class="staff-details">
+        <!-- Staff details will appear here based on selected services -->
+    </div>
+
+    <!-- Return to Home Page -->
+    <div class="button-group">
+        <a href="index.html">Return to Home Page</a>
+    </div>
+</body>
+</html>
