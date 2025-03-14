@@ -1,206 +1,281 @@
 from flask import Flask
-from flask import render_template, request, redirect, url_for, session, flash
+from flask import render_template, request, redirect, url_for, session, flash,jsonify
 from flask_mysqldb import MySQL
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
-
-
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+from functools import wraps
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'
+app.secret_key = '1234567890'
 
 mysql = MySQL(app)
+login_manager = LoginManager(app)
+
 
 app.config['MYSQL_HOST'] = '127.0.0.1'  
 app.config['MYSQL_USER'] = 'newuser'       
 app.config['MYSQL_PASSWORD'] = 'newuser'  
 app.config['MYSQL_DB'] = 'hotel'
 
-@app.route('/home')
-def home():
-    return render_template('index.html')
+class User(UserMixin):
+    def __init__(self, id, username, role):
+        self.id = id
+        self.username = username
+        self.role = role
 
-   
-@app.route('/login', methods=['GET', 'POST'])
+@login_manager.user_loader
+def load_user(user_id):
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT UsersID, Username, Role FROM users WHERE UsersID = %s", (user_id,))
+    user = cur.fetchone()
+    cur.close()
+    if user:
+        return User(user[0], user[1], user[2])
+    return None
+
+# Role-based access decorator
+
+
+def admin_required(f):
+    @wraps(f)  # This preserves the function name
+    def wrapper(*args, **kwargs):
+        if current_user.is_authenticated and current_user.role == 'admin':
+            return f(*args, **kwargs)
+        return jsonify({"error": "Unauthorized"}), 403
+    return wrapper
+
+@app.route("/login", methods=['POST','GET'])
 def login():
     if request.method == 'POST':
-        email = request.form.get('email')
+        username = request.form.get('Username')
         password = request.form.get('password')
 
+        if not username or not password:
+            flash("Username and password required", "danger")
+            return redirect(url_for("login"))
+
         cur = mysql.connection.cursor()
-        cur.execute("SELECT * FROM users WHERE email = %s", [email])
+        cur.execute("SELECT UsersID, Username, Password, Role FROM users WHERE Username = %s", (username,))
         user = cur.fetchone()
+        print(user[2])
+        print(password)
         cur.close()
 
-        if user and check_password_hash(user[3], password): 
-            session['user_id'] = user[0]
-            session['user_name'] = user[1]
-            flash(f"Welcome, {user[1]}!", "success")
-            return redirect(url_for('home'))
-        else:
-            flash("Invalid email or password. Please try again.", "danger")
-            return redirect(url_for('login')) 
-    
+        if user[2]==password:
+            user_obj = User(user[0], user[1], user[3])  
+            print("u")
+            login_user(user_obj)
+            return redirect(url_for('home'))  
+
+        flash("Invalid username or password", "danger")
+        return redirect(url_for('login'))  # Stay on login page if failed
 
     return render_template('login.html')
 
 
-@app.route('/register',methods=['POST'])
-def register():
+@app.route('/home')
+def home():
+    return render_template('index.html')
+
+@app.route("/signup", methods=['POST', 'GET'])
+def signup():
     if request.method == 'POST':
-        name = request.form['UserName']
-        email = request.form['Email']
-        password = request.form['Password']
-        hashed_password = generate_password_hash(password)  
+        username = request.form.get("Username")
+        password = request.form.get("password")
+        role = request.form.get("role")  # Default role selection
 
-        cur = mysql.connection.cursor()
-        cur.execute("INSERT INTO users (UserName, Email, Password) VALUES (%s, %s, %s)", 
-                    (name, email, hashed_password))
-        mysql.connection.commit()
-        cur.close()
-        flash("Registration Successful! You can now log in.", "success")
-        return redirect(url_for('login'))
+        if not username or not password:
+            flash("Username and password required", "danger")
+            return redirect(url_for("signup"))
 
-@app.route('/customer', methods=['GET', 'POST'])
+        try:
+            cur = mysql.connection.cursor()
+            cur.execute(
+                "INSERT INTO users (Username, Password, Role) VALUES (%s, %s, %s)",
+                (username, password, role),
+            )
+            mysql.connection.commit()
+            cur.close()
+            flash("Account created successfully! Please log in.", "success")
+            return redirect(url_for("login"))
+
+        except Exception as e:
+            flash("Username already exists or error in signup.", "danger")
+            return redirect(url_for("signup"))
+
+    return render_template("register.html")
+
+@app.route('/roombooking/customer',methods=['GET','POST'])
+@login_required
 def roombooking():
     if request.method == 'POST':
         session['Name'] = request.form.get('Name')
-        session['CustomerContact'] = request.form.get('CustomerContact')  # Correct field name
+        session['CustomerContact'] = request.form.get('ContactNumber')
         session['Email'] = request.form.get('Email')
         session['Address'] = request.form.get('Address')
-        print(session['Name'])
-        print(session['CustomerContact'])
-        print(session['Email'])
-        print(session['Address'])
-        
+
         return redirect(url_for('room_availability'))
     
     return render_template('customer.html')
 
-
-@app.route('/room_availability', methods=['GET', 'POST'])
+@app.route('/roombooking/customer/room_availability', methods=['GET', 'POST'])
+@login_required
 def room_availability():
     if request.method == 'POST':
-        session['Status'] = 'BOOKED'
-
         room_type = request.form.get('RoomType')
-        check_in = request.form.get('CheckinDate')
-        check_out = request.form.get('CheckoutDate')
+        checkin_date = request.form.get('CheckinDate')
+        checkout_date = request.form.get('CheckoutDate')
 
-        session['RoomType'] = room_type
-        session['CheckinDate'] = check_in
-        session['CheckoutDate'] = check_out
-        print(session['RoomType'])
-        print(session['CheckinDate'])
-        print(session['CheckoutDate'])
-        available_rooms = 0
-        cur = mysql.connection.cursor()
+        if not room_type or not checkin_date or not checkout_date:
+            flash("Please fill in all required fields.")
+            return redirect(url_for('room_availability'))
+
         try:
-            # SQL query to check for available rooms
-            cur.execute("""SELECT RoomID FROM rooms WHERE RoomType = %s AND RoomID NOT IN (SELECT RoomID FROM bookings WHERE NOT CheckoutDate <= %s OR CheckinDate >= %s)LIMIT 1 """, (room_type, check_in, check_out))
-            room = cur.fetchone()
-            print(room)
-            if room:
-            # Store the first available room's RoomID in the session
-                session['roomid'] = room[0]
-                print("roomid",session['roomid'])
-                flash("Rooms are available for the selected type and dates.")
-                session['RoomAvailable'] = True
+            cur = mysql.connection.cursor()
+            cur.execute("SELECT PricePerNight FROM rooms WHERE RoomType = %s", (room_type,))
+            price_per_night = cur.fetchone()
+
+            if price_per_night:
+                price_per_night = price_per_night[0]
+                total_days = (datetime.strptime(checkout_date, '%Y-%m-%d') - datetime.strptime(checkin_date, '%Y-%m-%d')).days
+                if total_days <= 0:
+                    flash("Checkout date must be after check-in date.")
+                    return redirect(url_for('room_availability'))
+
+                total_amount = total_days * float(price_per_night)
+                session['TotalAmount'] = total_amount  # ✅ Set TotalAmount before redirecting
+                print(session['TotalAmount'])
+                flash(f"Total amount calculated: {total_amount}")
             else:
-                flash("No rooms are available for the selected type and dates.")
-                session['RoomAvailable'] = False
-        except Exception as e:
-            flash("An error occurred while checking room availability.")
-        finally:
+                flash("Room type not found. Please select a valid room type.")
+                return redirect(url_for('room_availability'))
+
             cur.close()
 
-        # Redirect to payment if rooms are available
-        if session.get('RoomAvailable'):
-            return redirect(url_for('payment'))
+        except Exception as e:
+            flash("Database error occurred while fetching room price.")
+            print(f"Error: {e}")
+            return redirect(url_for('room_availability'))
+
+        return redirect(url_for('payment'))  # Redirect to payment
 
     return render_template('rooms.html')
 
-@app.route('/payment', methods=['GET', 'POST'])
-def payment():
-    amtpaid = 0  # Initialize amtpaid for GET requests
-    if request.method == 'POST':
-        cur = mysql.connection.cursor()
-        # Fetch the price per night
-        query = "SELECT PricePerNight FROM rooms WHERE RoomID = %s"
-        cur.execute(query, (session['roomid'],))
-        result = cur.fetchone()
-        print(result)
-        if result:
-            price_per_night = result[0]
-        else:
-            flash("Invalid Room ID.")
-            return render_template('payment.html', amtpaid=amtpaid)
-        # Calculate the number of days
-        query_days = "SELECT DATEDIFF(%s, %s)"
-        values = (session['CheckoutDate'], session['CheckinDate'])
-        cur.execute(query_days, values)
-        days = cur.fetchone()
-        print(days)
-        days = days[0] if days else 1  # Default to 1 day if calculation fails
 
-        # Calculate total amount
-        amtpaid = float(price_per_night) * days
-        print(amtpaid)
-        # Get form values and validate
+@app.route('/roombooking/customer/room_availability/payment', methods=['GET', 'POST'])
+@login_required
+def payment():
+    if request.method == 'POST':
+        amount_paid = session.get('TotalAmount')  # Fetch total amount from session
         payment_mode = request.form.get('PaymentMode')
         payment_date = request.form.get('PaymentDate')
         payment_status = request.form.get('PaymentStatus')
 
-        # Check for missing required fields
-        if not payment_mode or not payment_date or not payment_status:
-            flash("All fields are required.")
-            return render_template('payment.html', amtpaid=amtpaid)
+        # Ensure all required fields are present
+        if not amount_paid or not payment_mode or not payment_date or not payment_status:
+            flash("Please fill in all payment details.")
+            return redirect(url_for('payment'))
 
-        # Store in session for later use
-        session['AmountPaid'] = amtpaid
-        session['PaymentMode'] = payment_mode
-        session['PaymentDate'] = payment_date
-        session['PaymentStatus'] = payment_status
+        try:
+            cur = mysql.connection.cursor()
+            cur.execute("""
+                CALL Roombooking(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, @confirmation_message)
+            """, (
+                session['Name'], 
+                session['CustomerContact'],
+                session['Email'],
+                session['Address'],
+                session['RoomType'],
+                5,  # Assuming this is some constant related to room booking
+                datetime.date.today(),
+                session['CheckinDate'],
+                session['CheckoutDate'],
+                session['Status'],
+                amount_paid,
+                payment_mode,
+                payment_date,
+                payment_status
+            ))
 
-        # Insert data into the customer table
-        cur.execute("""
-            INSERT INTO customer (Name, ContactNumber, Email, Address)
-            VALUES (%s, %s, %s, %s)
-        """, (session['Name'], session['CustomerContact'], session['Email'], session['Address']))
+            cur.execute("SELECT @confirmation_message;")
+            confirmation_message = cur.fetchone()[0]
+            flash(confirmation_message)
 
-        # Insert booking details
-        cur.execute("""
-            INSERT INTO bookings (CustomerID, RoomID, BookingDate, CheckinDate, CheckoutDate, Status)
-            VALUES ((SELECT MAX(CustomerID) FROM customer), %s, %s, %s, %s, %s)
-        """, (session['roomid'], datetime.today().strftime('%Y-%m-%d'), session['CheckinDate'], session['CheckoutDate'], session['Status']))
+        except Exception as e:
+            flash("An error occurred during payment processing.")
+            print(e)
+        finally:
+            cur.close()
 
-        # Update room status
-        cur.execute("""
-            UPDATE rooms
-            SET Status = 'Booked'
-            WHERE RoomID = %s
-        """, (session['roomid'],))
+        customer_name = session.get('customer_name')
+        session.clear()  # Clear session after booking confirmation
 
-        # Insert payment details
-        cur.execute("""
-            INSERT INTO payment (BookingID, AmountPaid, PaymentMode, PaymentDate, PaymentStatus)
-            VALUES ((SELECT MAX(BookingID) FROM bookings), %s, %s, %s, %s)
-        """, (amtpaid, session['PaymentMode'], session['PaymentDate'], session['PaymentStatus']))
-
-        # Commit and close
-        mysql.connection.commit()
-        cur.close()
-
-        flash("Booking Successful")
-        customer_name = session.get('Name', 'Customer')  # Use 'Customer' if name not in session
-        session.clear()
         return f"Thank you, {customer_name}! Your booking is confirmed."
 
-    # Render the template for GET request, passing amtpaid
-    return render_template('payment.html', amtpaid=amtpaid)
+    # Pass total amount to the template for display
+    total_amount = session.get('TotalAmount', 0)
+    return render_template('payment.html', total_amount=total_amount)
+
+
+@app.route('/paymentstatus', methods=['GET', 'POST'])
+@login_required
+def payment_status():
+    if request.method == 'POST':
+        booking_id = request.form.get('BookingID')
+        print(booking_id)
+        if not booking_id:
+            flash("Booking ID is required!", "danger")
+            return redirect(url_for("payment_status"))
+
+        cur = mysql.connection.cursor()
+
+        # Fetch CustomerID from the booking table
+        cur.execute("SELECT CustomerID FROM bookings WHERE BookingID = %s", (booking_id,))
+        customer_id = cur.fetchone()
+
+
+        if not customer_id:
+            flash("Invalid Booking ID. No booking found.", "warning")
+            return redirect(url_for("payment_status"))
+
+        customer_id = customer_id[0]
+
+        # Fetch Room Payment using BookingID
+        cur.execute("""
+            SELECT PaymentDate, PaymentMode,  AmountPaid, PaymentStatus
+            FROM payment
+            WHERE BookingID = %s
+        """, (booking_id,))
+        room_payment = cur.fetchone()
+        print("roompay",room_payment)
+
+        # Fetch Additional Service Payments using CustomerID
+        cur.execute("""
+            SELECT PaymentDate, PaymentMode,AmountPaid, PaymentStatus
+            FROM additionalservicepayment
+            WHERE CustomerID = %s
+        """, (customer_id,))
+        additional_payments = cur.fetchall()
+        cur.close()
+
+        # Calculate Total Payment
+        total_amount = room_payment[2] if room_payment else 0
+        for service in additional_payments:
+            total_amount += service[2]  # Additional Service Payment Amount
+
+        return render_template(
+            "payment_summary.html",
+            room_payment=room_payment,
+            additional_payments=additional_payments,
+            total_amount=total_amount
+        )
+
+    return render_template("payment_summary.html")
 
 
 @app.route('/checkroomavailability', methods=['GET', 'POST'])
+@login_required
 def checkroom_availability():
     if request.method == 'POST':
         # Get input from the form
@@ -242,89 +317,69 @@ def checkroom_availability():
     return render_template('checkroom.html')
 
 
-
-@app.route('/update/customer', methods=['GET','POST'])
+@app.route('/update/customer', methods=['GET', 'POST'])
+@login_required
+@admin_required
 def updatecustomerdetails():
     if request.method == 'POST':
         customer_id = request.form.get('customer_id')
         fields_to_update = {}
-        if 'Name' in request.form:
+        if 'UpdateName' in request.form:
             fields_to_update['Name'] = request.form.get('Name')
-        if 'Contact' in request.form:
+        if 'update_contact' in request.form:
             fields_to_update['Contact'] = request.form.get('Contact')
-        if 'Email' in request.form:
+        if 'update_email' in request.form:
             fields_to_update['Email'] = request.form.get('Email')
-        if 'Address' in request.form:
+        if 'update_address' in request.form:
             fields_to_update['Address'] = request.form.get('Address')
 
-        print(customer_id)
-        print(fields_to_update)
-
         if fields_to_update:
-            try:
-                conn = mysql.connection.cursor()
-                query = "UPDATE customer SET "
-                query += ", ".join(f"{key} = %s" for key in fields_to_update.keys())
-                query += " WHERE CustomerID = %s"
-                values = list(fields_to_update.values()) + [customer_id]
-                conn.execute(query, values)
-                mysql.connection.commit()
-                flash(f"Customer {customer_id} updated successfully!")
-            except Exception as e:
-                flash(f"An error occurred: {e}")
-            return redirect(url_for('updatecustomerdetails'))
+            conn = mysql.connection.cursor()
+            query = "UPDATE Customers SET "
+            query += ", ".join(f"{key} = ?" for key in fields_to_update.keys())
+            query += " WHERE id = ?"
+            values = list(fields_to_update.values()) + [customer_id]
+            conn.execute(query, values)
+
+            return flash(f"Customer {customer_id} updated successfully!")
         else:
-            flash("No fields selected for update!")
-            return redirect(url_for('updatecustomerdetails'))
+            return flash("No fields selected for update!")
     return render_template('update_customer.html')
 
 @app.route('/update/staff', methods=['GET', 'POST'])
+@login_required
+@admin_required
 def updatestaffdetails():
     if request.method == 'POST':
-        Staff_id = request.form.get('staff_id')  # Ensure this matches your form's input name
+        Staff_id = request.form.get('Staff_id')
         fields_to_update = {}
-
-        # Collect fields to update from the form
-        if request.form.get('Name'):
+        if 'UpdateName' in request.form:
             fields_to_update['Name'] = request.form.get('Name')
-        if request.form.get('Role'):
+        if 'UpdateRole' in request.form:
             fields_to_update['Role'] = request.form.get('Role')
-        if request.form.get('Contact'):
+        if 'UpdateContact' in request.form:
             fields_to_update['Contact'] = request.form.get('Contact')
-        if request.form.get('Salary'):
+        if 'UpdateSalary' in request.form:
             fields_to_update['Salary'] = request.form.get('Salary')
-        if request.form.get('ShiftTiming'):
+        if 'UpdateShiftTiming' in request.form:
             fields_to_update['ShiftTiming'] = request.form.get('ShiftTiming')
 
-        print(fields_to_update)  # Debugging: Print the fields to update
-        print(Staff_id)         # Debugging: Print the staff ID
-
         if fields_to_update:
-            try:
-                conn = mysql.connection.cursor()
+            conn = mysql.connection.cursor()
+            query = "UPDATE Staff SET "
+            query += ", ".join(f"{key} = ?" for key in fields_to_update.keys())
+            query += " WHERE id = ?"
+            values = list(fields_to_update.values()) + [Staff_id]
+            conn.execute(query, values)
 
-                # Construct the query using MySQL placeholders
-                query = "UPDATE Staff SET "
-                query += ", ".join(f"{key} = %s" for key in fields_to_update.keys())
-                query += " WHERE StaffID = %s"
-                values = list(fields_to_update.values()) + [Staff_id]
-
-                # Execute the query
-                conn.execute(query, values)
-                mysql.connection.commit()
-                flash(f"Staff {Staff_id} updated successfully!", "success")
-            except Exception as e:
-                flash(f"An error occurred: {e}", "error")
-            finally:
-                conn.close()
+            return flash(f"Staff {Staff_id} updated successfully!")
         else:
-            flash("No fields selected for update!", "warning")
-            return redirect(url_for('updatestaffdetails'))
-
+            return flash("No fields selected for update!")
     return render_template('update_staff.html')
 
-
 @app.route('/add/staff', methods=['GET', 'POST'])
+@login_required
+@admin_required
 def addstaffdetails():
     if request.method == 'POST':
         session['Name'] = request.form.get('Name')
@@ -332,20 +387,14 @@ def addstaffdetails():
         session['ContactNumber'] = request.form.get('ContactNumber')
         session['Salary'] = request.form.get('Salary')
         session['ShiftTiming'] = request.form.get('ShiftTiming')
-        print(session['Name'])
-        print(session['ShiftTiming'])
         cur = mysql.connection.cursor()
-        cur.execute(
-            """INSERT INTO staff (Name, Role, Contactnumber, Salary, ShiftTiming) VALUES (%s, %s, %s, %s, %s)""",
-            (session['Name'], session['Role'], session['ContactNumber'], session['Salary'], session['ShiftTiming']))
-        mysql.connection.commit()  # Commit the transaction
-        cur.close()
-
+        cur.execute("INSERT INTO STAFF (Name,Role,ContactNumber,Salary,ShiftTiming) VALUES(session['Name'],session['Role']),session['ContactNumber'],session['Salary'],session['ShiftTiming']")
         session.clear()
         flash(f"Staff details inserted sucssesfully")
-    return render_template('staff.html')
 
 @app.route('/add/user', methods=['GET', 'POST'])
+@login_required
+@admin_required
 def adduserdetails():
     if request.method == 'POST':
         session['Username'] = request.form.get('Username')
@@ -356,49 +405,95 @@ def adduserdetails():
         session.clear()
         flash(f"User details inserted sucssesfully")
 
-@app.route('/addtionalservices',methods=['GET','POST'])
-def addtionalservices():
+@app.route('/additionalservices', methods=['GET', 'POST'])
+@login_required
+def additionalservices():
+    staff_info = None
+    message = ""
+    total_cost = 0
+    selected_services = []
+    service_date = None
+
     if request.method == 'POST':
-        session['BookingID'] = request.form.get('BookingID')
-        additonalservices = {}
-        Quantity_additonalservices={}
-        if 'Gym' in request.form:
-            additonalservices['Gym'] = request.form.get('Gym')
-            Quantity_additonalservices['Gym'] = request.form.get('Gym_Quantity_additionalservices')
-        if 'Room Service' in request.form:
-            additonalservices['Room Service'] = request.form.get('Room Service')
-            Quantity_additonalservices['Room Service'] = request.form.get('Room Service_Quantity_additionalservices')
-        if 'Spa' in request.form:
-            additonalservices['Spa'] = request.form.get('Spa')
-            Quantity_additonalservices['Spa'] = request.form.get('Spa_Quantity_additionalservices')
-        if 'Laundry Service' in request.form:
-            additonalservices['Laundry Service'] = request.form.get('Laundry Service')
-            Quantity_additonalservices['Laundry Service'] = request.form.get('Laundry Service_Quantity_additionalservices')
+        booking_id = request.form.get('BookingID')
+        service_date = request.form.get('ServiceDate')
+        payment_mode = request.form.get('PaymentMode')
 
-        price={}
-        id={}
-        Totalcost={}
+        # Fetch the CustomerID from BookingID
         cur = mysql.connection.cursor()
-        for service in addtionalservices:
-            price[service]=cur.execute("SELECT Price FROM additionalservices WHERE ServicesName ="+ service)
-            id[service]=cur.execute("SELECT ServiceID FROM additionalservices WHERE ServicesName ="+ service)
-            Totalcost[service]=Quantity_additonalservices[service]*price[service]
-        for service in additonalservices:
-            cur.execute(f"INSERT INTO serviceusage (ServiceID,BookingID,Quantity,TotalCost) VALUES({id[service]},session['BookingID'],{Quantity_additonalservices[service]},{Totalcost[service]})")
-        cur.execute("SELECT SUM(TotalCost) FROM serviceusage WHERE BookingID="+str(session['BookingID']))
-        cur.execute("UPDATE payment SET AmountPaid="+(("SELECT AmountPaid FROM payment WHERE BookingID="+session['BookingID']) + cur.fetchone()))
-        session.clear()
+        cur.execute("SELECT CustomerID FROM bookings WHERE BookingID = %s", (booking_id,))
+        customer_result = cur.fetchone()
+        if not customer_result:
+            flash("Invalid Booking ID")
+            return redirect(url_for('additionalservices'))
+        customer_id = customer_result[0]
 
-        flash("sucssesfuly completed additionalservies")
-    return render_template('services.html')
+        # Get selected services
+        services = ['Gym', 'Spa', 'Laundry']
+        for service in services:
+            if service in request.form:
+                selected_services.append(service)
 
-#email part
+        # Fetch price and service ID for selected services
+        for service in selected_services:
+            cur.execute("SELECT ServiceID, ServiceCharge FROM AdditionalServices WHERE ServiceName = %s", (service,))
+            result = cur.fetchone()
+            service_id = result[0]
+            service_charge = result[1]
+            total_cost += service_charge
 
-@app.route('/logout')
+            # Check staff availability (Max 10 per day logic)
+            cur.execute("""
+                SELECT StaffID FROM Staff
+                WHERE Role = %s AND StaffID NOT IN (
+                    SELECT StaffID FROM ServiceBooking
+                    WHERE ServiceDate = %s
+                    GROUP BY StaffID
+                    HAVING COUNT(ServiceBookingID) >= 10
+                )
+                LIMIT 1
+            """, (service, service_date))
+            
+            staff_result = cur.fetchone()
+
+            if staff_result:
+                # Assign the staff and insert into ServiceBooking table
+                staff_id = staff_result[0]
+                cur.execute("""
+                    INSERT INTO ServiceBooking (CustomerID, ServiceID, StaffID, ServiceDate)
+                    VALUES (%s, %s, %s, %s)
+                """, (customer_id, service_id, staff_id, service_date))
+
+                # Fetch the staff information
+                cur.execute("SELECT Name, Role FROM Staff WHERE StaffID = %s", (staff_id,))
+                staff_info = cur.fetchone()
+
+                # Handle payment status based on Prepaid or Postpaid
+                payment_status = "Paid" if payment_mode == "Prepaid" else "Unpaid"
+
+                # Insert into AdditionalServicePayment
+                cur.execute("""
+                    INSERT INTO AdditionalServicePayment (CustomerID, ServiceBookingID, AmountPaid, PaymentMode, PaymentDate, PaymentStatus)
+                    VALUES (%s, LAST_INSERT_ID(), %s, %s, %s, %s)
+                """, (customer_id, service_charge, payment_mode, datetime.date.today(), payment_status))
+
+                mysql.connection.commit()
+
+            else:
+                message = f"No staff is available for {service} on {service_date}."
+                return render_template('services.html', message=message)
+
+        if not message:
+            message = f"Services successfully booked. Total Amount Paid: ₹{total_cost}"
+
+    return render_template('services.html', staff_info=staff_info, message=message, total_cost=total_cost, payment_status=payment_status)
+
+
+@app.route("/logout")
+@login_required
 def logout():
-    session.clear()
-    flash("You have been logged out.", "info")
-    return redirect(url_for('login'))
+    logout_user()
+    return jsonify({"message": "Logged out successfully"})
 
 
 if __name__ == '__main__':

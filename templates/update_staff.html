@@ -29,10 +29,10 @@
             margin-bottom: 10px;
             color: #34495e;
         }
-        .options {
-            margin: 15px 0;
+        .options, .sub-options {
+            margin: 10px 0;
         }
-        input[type="text"], input[type="number"], input[type="time"], button {
+        input[type="text"], input[type="number"], button {
             width: 100%;
             padding: 10px;
             margin-bottom: 15px;
@@ -49,140 +49,65 @@
         button:hover {
             background-color: #3498db;
         }
+        .back {
+            text-align: center;
+            margin-top: 10px;
+        }
+        .back a {
+            color: #3498db;
+            text-decoration: none;
+        }
         .hidden {
             display: none;
-        }
-  /* Navbar Styles */
-        .navbar {
-            background-color: #4a90e2;
-            display: flex;
-            justify-content: center;
-            padding: 10px 0;
-        }
-        .navbar ul {
-            list-style: none;
-            display: flex;
-            margin: 0;
-            padding: 0;
-        }
-        .navbar li {
-            padding: 10px 20px;
-        }
-        .navbar a {
-            text-decoration: none;
-            color: white;
-            font-weight: bold;
-        }
-        .navbar a:hover {
-            background-color: #357ab7;
-            border-radius: 5px;
         }
     </style>
 </head>
 <body>
-    {% with messages = get_flashed_messages() %}
-    {% if messages %}
-        <ul>
-            {% for message in messages %}
-                <li>{{ message }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
-    {% endwith %}
-    <!-- Navigation Bar -->
-    <div class="navbar">
-        <ul>
-            <li><a href="home.html">Home</a></li>
-            <li><a href="about_us.html">About Us</a></li>
-            <li><a href="services.html">Services</a></li>
-            <li><a href="contact_us.html">Contact Us</a></li>
-            <li><a href="logout.html">Logout</a></li>
-        </ul>
-    </div>
-	</style>
-
-       
-
     <h1>Update Staff Details</h1>
-    <form action="{{url_for( 'updatestaffdetails')}}" method='POST'>
+    <form>
         <label for="staff_id">Staff ID</label>
         <input type="text" id="staff_id" name="staff_id" placeholder="Enter Staff ID" required>
 
-        <label for="update-field">Select Field to Update</label>
+        <label for="staff_role">Staff Role</label>
         <div class="options">
-            <label><input type="radio" name="update_field" value="name" onclick="showField('name-field')"> Name</label>
-            <label><input type="radio" name="update_field" value="role" onclick="showField('role-field')"> Role</label>
-            <label><input type="radio" name="update_field" value="contact_number" onclick="showField('contact-number-field')"> Contact Number</label>
-            <label><input type="radio" name="update_field" value="salary" onclick="showField('salary-field')"> Salary</label>
-            <label><input type="radio" name="update_field" value="shift" onclick="showField('shift-fields')"> Shift Timings</label>
+            <label><input type="radio" name="staff_role" value="housekeeping" onclick="showSubOptions('housekeeping')"> Housekeeping</label>
+            <label><input type="radio" name="staff_role" value="reception" onclick="showSubOptions('reception')"> Reception</label>
+            <label><input type="radio" name="staff_role" value="management" onclick="showSubOptions('management')"> Management</label>
         </div>
 
-        <!-- Dynamic Fields -->
-        <div id="name-field" class="hidden">
-            <label for="name">Name</label>
-            <input type="text" id="name" name='Name' placeholder="Enter Name">
+        <!-- Sub-options for roles -->
+        <div id="housekeeping-options" class="sub-options hidden">
+            <label><input type="radio" name="housekeeping_type" value="cleaner"> Cleaner</label>
+            <label><input type="radio" name="housekeeping_type" value="laundry"> Laundry Staff</label>
         </div>
-        <div id="role-field" class="hidden">
-            <label for="role">Role</label>
-            <input type="text" id="role" name="Role" placeholder="Enter Role">
+        <div id="reception-options" class="sub-options hidden">
+            <label><input type="radio" name="reception_type" value="front_desk"> Front Desk</label>
+            <label><input type="radio" name="reception_type" value="guest_support"> Guest Support</label>
         </div>
-        <div id="contact-number-field" class="hidden">
-            <label for="contact_number">Contact Number</label>
-            <input type="text" id="contact_number" name='Contact' placeholder="Enter Contact Number">
+        <div id="management-options" class="sub-options hidden">
+            <label><input type="radio" name="management_type" value="general_manager"> General Manager</label>
+            <label><input type="radio" name="management_type" value="assistant_manager"> Assistant Manager</label>
         </div>
-        <div id="salary-field" class="hidden">
-            <label for="salary">Salary</label>
-            <input type="number" id="salary" name='Salary' placeholder="Enter Salary">
-        </div>
-        <div id="shift-fields" class="hidden">
-            <label for="shift_start">Shift Start Time</label>
-            <input type="time" id="shift_start" name="shift_start">
-            <label for="shift_end">Shift End Time</label>
-            <input type="time" id="shift_end" name="shift_end">
-            <label for="total_hours">Total Working Hours</label>
-            <input type="text" id="total_hours" name="ShiftTiming" placeholder="HH:MM:SS" readonly>
-        </div>
+
+        <label for="salary">Salary</label>
+        <input type="number" id="salary" name="salary" placeholder="Enter Salary" required>
 
         <button type="submit">Update Staff</button>
     </form>
-<div class="button-group">
-        <a href="home.html">Return to Home Page</a>
+    <div class="back">
+        <a href="index.html">Return to Home Page</a>
     </div>
 
     <script>
-        function showField(fieldId) {
-            const fields = ['name-field', 'role-field', 'contact-number-field', 'salary-field', 'shift-fields'];
-            fields.forEach(id => {
-                document.getElementById(id).classList.add('hidden');
+        // Show the relevant sub-options based on staff role
+        function showSubOptions(type) {
+            const subOptions = ['housekeeping', 'reception', 'management'];
+            subOptions.forEach(option => {
+                const element = document.getElementById(`${option}-options`);
+                element.classList.add('hidden');
             });
-            document.getElementById(fieldId).classList.remove('hidden');
+            document.getElementById(`${type}-options`).classList.remove('hidden');
         }
-
-        const shiftStart = document.getElementById('shift_start');
-        const shiftEnd = document.getElementById('shift_end');
-        const totalHours = document.getElementById('total_hours');
-
-        function calculateHours() {
-            if (shiftStart.value && shiftEnd.value) {
-                const start = new Date(`1970-01-01T${shiftStart.value}Z`);
-                const end = new Date(`1970-01-01T${shiftEnd.value}Z`);
-                let diff = (end - start) / 1000; // Difference in seconds
-
-                if (diff < 0) {
-                    diff += 24 * 3600; // Adjust for shifts crossing midnight
-                }
-
-                // Calculate HH:MM:SS
-                const hours = String(Math.floor(diff / 3600)).padStart(2, '0');
-                const minutes = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
-                const seconds = String(diff % 60).padStart(2, '0');
-
-                totalHours.value = `${hours}:${minutes}:${seconds}`;
-            }
-        }
-
-        shiftStart.addEventListener('change', calculateHours);
-        shiftEnd.addEventListener('change', calculateHours);
     </script>
 </body>
 </html>

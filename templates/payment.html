@@ -79,15 +79,6 @@
     </style>
 </head>
 <body>
-    {% with messages = get_flashed_messages() %}
-    {% if messages %}
-        <ul>
-            {% for message in messages %}
-                <li>{{ message }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
-    {% endwith %}
     <!-- Navigation Bar -->
     <div class="navbar">
         <ul>
@@ -100,25 +91,27 @@
     </div>
 
     <h1>Payment Information</h1>
-    <form action="{{ url_for('payment') }}" method='POST'>
+    <form action="{{ url_for('payment') }}" method="POST">
+        <!-- Amount Paid -->
         <!-- Amount Paid -->
         <label for="amount-paid">Amount Paid:</label>
-        <input type="number" id="amount-paid" name='AmountPaid' value="{{amtpaid}}" readonly><br><br>
+        <input type="number" id="amount-paid" name="AmountPaid" value="{{ session.get('TotalAmount', '') }}" required readonly><br><br>
+
 
         <!-- Payment Mode -->
         <label for="payment-mode">Payment Mode:</label>
-        <select id="payment-mode" name='PaymentMode' required>
-            <option value='Credit Card'>Credit Card</option>
-            <option value='Cash'>Cash</option>
+        <select id="payment-mode" name="PaymentMode" required>
+            <option value="Credit Card">Credit Card</option>
+            <option value="Cash">Cash</option>
         </select><br><br>
 
         <!-- Payment Date -->
         <label for="payment-date">Payment Date:</label>
-        <input type="date" id="payment-date" name='PaymentDate' required><br><br>
+        <input type="date" id="payment-date" name="PaymentDate" required><br><br>
 
         <!-- Payment Status -->
         <label for="payment-status">Payment Status:</label>
-        <select id="payment-status" name='PaymentStatus' required>
+        <select id="payment-status" name="PaymentStatus" required>
             <option value="Prepaid">Prepaid</option>
             <option value="Postpaid">Postpaid</option>
         </select><br><br>

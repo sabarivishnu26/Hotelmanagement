@@ -69,33 +69,33 @@
     <script>
         // Function to generate a random customer ID
         function generateCustomerID() {
-            const customerID = Math.floor(1000 + Math.random() * 9000); // Format: CUSTXXXX
+            const customerID =Math.floor(1000 + Math.random() * 9000); // Format: CUSTXXXX
             document.getElementById('customer-id').value = customerID;
         }
     </script>
 </head>
 <body onload="generateCustomerID()">
     <h1>Customer Information</h1>
-    <form action="{{url_for('roombooking')}}" method="POST">
+    <form action="{{url_for('roombooking')}}" method="post">
         <!-- Customer ID (readonly, generated automatically) -->
         <label for="customer-id">Customer ID:</label>
         <input type="text" id="customer-id" name="customer_id" readonly><br><br>
         
         <!-- Customer Name -->
         <label for="name">Name:</label>
-        <input type="text" id="name" name='Name' required><br><br>  <!-- Corrected name attribute -->
+        <input type="text" id="name" name="name" required><br><br>
         
         <!-- Customer Contact -->
         <label for="contact">Contact Number:</label>
-        <input type="text" id="contact" name='CustomerContact' required><br><br>  <!-- Corrected name attribute -->
+        <input type="text" id="contact" name="contact" required><br><br>
         
         <!-- Customer Email -->
         <label for="email">Email:</label>
-        <input type="email" id="email" name='Email' required><br><br>
+        <input type="email" id="email" name="email" required><br><br>
         
         <!-- Customer Address -->
         <label for="address">Address:</label>
-        <textarea id="address" name='Address' rows="3" cols="30" required></textarea><br><br>
+        <textarea id="address" name="address" rows="3" cols="30" required></textarea><br><br>
         
         <button type="submit">Proceed to Room Booking</button>
     </form>

@@ -3,173 +3,194 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payment and Booking Summary</title>
+    <title>Payment Status</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
+            background-color: #f4f4f4;
+            margin: 0;
             padding: 0;
-            background-color: #f9f9e3;
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
         }
-        h1 {
-            text-align: center;
-            color: #8e44ad;
-            margin-top: 20px;
-            width: 100%;
-        }
+
         .container {
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-            max-width: 1200px;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-        .summary-container {
-            width: 45%;
             max-width: 600px;
-            background: #ffffff;
-            border-radius: 8px;
+            margin: 50px auto;
             padding: 20px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
-        }
-        .summary-container h2 {
+            background: white;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
             text-align: center;
-            color: #8e44ad;
-            margin-bottom: 15px;
         }
-        .summary-details {
-            margin-bottom: 15px;
+
+        h2 {
+            color: #333;
         }
-        .summary-details label {
+
+        form {
+            margin: 20px 0;
+        }
+
+        label {
             font-weight: bold;
-            display: inline-block;
-            width: 150px;
-            color: #34495e;
         }
-        .summary-details span {
-            font-size: 16px;
-            color: #555;
-            display: inline-block;
-            margin-bottom: 10px;
+
+        input[type="text"] {
+            width: 80%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
         }
+
         button {
-            background-color: #8e44ad;
-            color: #fff;
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
             border: none;
+            border-radius: 5px;
             cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .flash-messages p {
             padding: 10px;
             border-radius: 5px;
-            font-size: 16px;
+            margin: 10px 0;
+        }
+
+        .flash-messages .danger {
+            background-color: #ffb3b3;
+            color: #b30000;
+        }
+
+        .payment-details {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            background-color: #fff;
+            border-radius: 5px;
+            text-align: left;
+        }
+
+        .paid {
+            color: green;
+            font-weight: bold;
+        }
+
+        .pending {
+            color: red;
+            font-weight: bold;
+        }
+
+        .table {
             width: 100%;
+            border-collapse: collapse;
             margin-top: 10px;
         }
-        button:hover {
-            background-color: #9b59b6;
+
+        .table th, .table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
         }
-        .back {
-            text-align: center;
-            margin-top: 10px;
+
+        .table th {
+            background-color: #f2f2f2;
         }
-        .back a {
-            color: #3498db;
-            text-decoration: none;
-        }
-        /* Responsive Design for smaller screens */
-        @media (max-width: 768px) {
-            .container {
-                flex-direction: column;
-                align-items: center;
-            }
-            .summary-container {
-                width: 100%;
-            }
+
+        .total-amount {
+            font-weight: bold;
+            font-size: 18px;
+            margin-top: 15px;
         }
     </style>
 </head>
 <body>
-
-    <h1>Payment and Booking Summary</h1>
-
     <div class="container">
-        <!-- Payment Summary (Left Side) -->
-        <div class="summary-container">
-            <h2>Payment Summary</h2>
-            <div class="summary-details">
-                <label>Payee Name:</label>
-                <span id="payee-name">John Doe</span>
-            </div>
-            <div class="summary-details">
-                <label>Mode of Payment:</label>
-                <span id="payment-mode">Credit Card</span>
-            </div>
-            <div class="summary-details">
-                <label>Booking Date:</label>
-                <span id="booking-date">01/13/2025</span>
-            </div>
-            <div class="summary-details">
-                <label>Room Details:</label>
-                <span id="room-details">Room Number: 101, Type: Single</span>
-            </div>
+        <h2>Check Payment Status</h2>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=True) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <p class="{{ category }}">{{ message }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Booking ID Form -->
+        <form method="POST" action="{{ url_for('payment_status') }}">
+            <label for="booking_id">Enter Booking ID:</label>
+            <input type="text" id="booking_id" name="BookingID" required>
+            <button type="submit">Check Status</button>
+        </form>
+
+        {% if room_payment or additional_payments %}
+        <div class="payment-details">
+            <h3>Payment Summary</h3>
+
+            <!-- Room Payment Details -->
+            {% if room_payment %}
+            <h4>Room Payment</h4>
+            <table class="table">
+                <tr>
+                    <th>Payment Date</th>
+                    <th>Payment Mode</th>
+                    <th>Amount Paid</th>
+                    <th>Status</th>
+                </tr>
+                <tr>
+                    <td>₹{{ room_payment[0] }}</td>
+                    <td>{{ room_payment[1] }}</td>
+                    <td>{{ room_payment[2] }}</td>
+                    <td>
+                        {% if room_payment[3] == "Paid" %}
+                            <span class="paid">Paid</span>
+                        {% else %}
+                            <span class="pending">Pending</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            </table>
+            {% endif %}
+
+            <!-- Additional Service Payment Details -->
+            {% if additional_payments %}
+            <h4>Additional Services Payment</h4>
+            <table class="table">
+                <tr>
+                    <th>Payment Date</th>
+                    <th>Payment Mode</th>
+                    <th>Amount Paid</th>
+                    <th>Status</th>
+                </tr>
+                {% for service in additional_payments %}
+                <tr>
+                    <td>₹{{ service[0] }}</td>
+                    <td>{{ service[1] }}</td>
+                    <td>{{ service[2] }}</td>
+                    <td>
+                        {% if service[3] == "Paid" %}
+                            <span class="paid">Paid</span>
+                        {% else %}
+                            <span class="pending">Pending</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% endif %}
+
+            <!-- Total Payment -->
+            <p class="total-amount">Total Amount Paid: ₹{{ total_amount }}</p>
         </div>
-
-        <!-- Booking Summary (Right Side) -->
-        <div class="summary-container">
-            <h2>Booking Summary</h2>
-            <div class="summary-details">
-                <label>Customer Name:</label>
-                <span id="customer-name">John Doe</span>
-            </div>
-            <div class="summary-details">
-                <label>Room Type:</label>
-                <span id="room-type">Single</span>
-            </div>
-            <div class="summary-details">
-                <label>Booking Status:</label>
-                <span id="booking-status">Confirmed</span>
-            </div>
-            <button id="booking-summary" onclick="displayBookingSummary()">View Full Booking Details</button>
-        </div>
+        {% endif %}
     </div>
-
-    <div class="back">
-        <a href="index.html">Return to Home Page</a>
-    </div>
-
-    <script>
-        // Function to populate payment details
-        function displayPaymentSummary() {
-            const payeeName = 'John Doe'; // Example data
-            const paymentMode = 'Credit Card'; // Example data
-            const bookingDate = new Date().toLocaleDateString(); // Example data
-            const roomDetails = 'Room Number: 101, Type: Single'; // Example data
-
-            document.getElementById('payee-name').innerText = payeeName;
-            document.getElementById('payment-mode').innerText = paymentMode;
-            document.getElementById('booking-date').innerText = bookingDate;
-            document.getElementById('room-details').innerText = roomDetails;
-        }
-
-        // Function to populate booking summary
-        function displayBookingSummary() {
-            const customerName = 'John Doe'; // Example data
-            const roomType = 'Single'; // Example data
-            const bookingStatus = 'Confirmed'; // Example data
-
-            document.getElementById('customer-name').innerText = customerName;
-            document.getElementById('room-type').innerText = roomType;
-            document.getElementById('booking-status').innerText = bookingStatus;
-
-            alert('Displaying full booking summary...');
-        }
-
-        // Call the function to populate the payment summary
-        displayPaymentSummary();
-    </script>
-
 </body>
 </html>
