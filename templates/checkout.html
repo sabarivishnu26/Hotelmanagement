@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Checkout</title>
+</head>
+<body>
+    <h2>Checkout Page</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            {% if category == 'success' %}
+                <p style="color: green;">{{ message }}</p>
+            {% else %}
+                <p style="color: red;">{{ message }}</p>
+        {% endif %}
+        
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST">
+        <label for="bookingid">Enter Booking ID:</label>
+        <input type="text" name="bookingid" required>
+        <button type="submit">Search</button>
+    </form>
+
+    {% if booking %}
+        <h3>Booking Details</h3>
+        <p><strong>Booking ID:</strong> {{ booking[0] }}</p>
+        <p><strong>Customer ID:</strong> {{ booking[1] }}</p>
+        <p><strong>Room ID:</strong> {{ booking[2] }}</p>
+        <p><strong>Booking Date:</strong> {{ booking[3] }}</p>
+        <p><strong>Check-in Date:</strong> {{ booking[4] }}</p>
+        <p><strong>Check-out Date:</strong> {{ booking[5] }}</p>
+        <p><strong>Status:</strong> {{ booking[6] }}</p>
+
+        {% if booking[6] != 'checkedout' %}
+            <form action="{{ url_for('confirm_checkout', booking_id=booking[0]) }}" method="POST">
+                <button type="submit">Confirm Checkout</button>
+            </form>
+        {% else %}
+            <p style="color: green;">Already Checked Out</p>
+        {% endif %}
+    {% endif %}
+</body>
+</html>

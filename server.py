@@ -2,10 +2,10 @@ from flask import Flask
 from flask import render_template, request, redirect, url_for, session, flash,jsonify
 from flask_mysqldb import MySQL
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
+from datetime import datetime 
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from functools import wraps
-
+import time
 app = Flask(__name__)
 app.secret_key = '1234567890'
 
@@ -111,7 +111,7 @@ def signup():
 def roombooking():
     if request.method == 'POST':
         session['Name'] = request.form.get('Name')
-        session['CustomerContact'] = request.form.get('ContactNumber')
+        session['CustomerContact'] = request.form.get('CustomerContact')
         session['Email'] = request.form.get('Email')
         session['Address'] = request.form.get('Address')
 
@@ -126,6 +126,8 @@ def room_availability():
         room_type = request.form.get('RoomType')
         checkin_date = request.form.get('CheckinDate')
         checkout_date = request.form.get('CheckoutDate')
+        session['CheckinDate']=checkin_date
+        session['CheckoutDate']=checkout_date
 
         if not room_type or not checkin_date or not checkout_date:
             flash("Please fill in all required fields.")
@@ -133,32 +135,60 @@ def room_availability():
 
         try:
             cur = mysql.connection.cursor()
-            cur.execute("SELECT PricePerNight FROM rooms WHERE RoomType = %s", (room_type,))
+
+            # ✅ Check room availability
+            cur.execute("""
+                SELECT RoomID FROM rooms 
+                WHERE RoomType = %s 
+                AND RoomID NOT IN (
+                    SELECT RoomID FROM bookings 
+                    WHERE NOT (CheckoutDate <= %s OR CheckinDate >= %s)
+                ) 
+                LIMIT 1
+            """, (room_type, checkin_date, checkout_date))
+
+            room = cur.fetchone()
+
+            if not room:
+                flash("No rooms available for the selected dates.")
+                cur.close()
+                return redirect(url_for('room_availability'))
+
+            # ✅ Room is available, proceed with booking
+            room_id = room[0]
+            session['RoomID'] = room_id
+
+            # ✅ Fetch price per night
+            cur.execute("SELECT PricePerNight FROM rooms WHERE RoomID = %s", (room_id,))
             price_per_night = cur.fetchone()
 
             if price_per_night:
-                price_per_night = price_per_night[0]
+                price_per_night = float(price_per_night[0])
                 total_days = (datetime.strptime(checkout_date, '%Y-%m-%d') - datetime.strptime(checkin_date, '%Y-%m-%d')).days
+
                 if total_days <= 0:
                     flash("Checkout date must be after check-in date.")
+                    cur.close()
                     return redirect(url_for('room_availability'))
 
-                total_amount = total_days * float(price_per_night)
-                session['TotalAmount'] = total_amount  # ✅ Set TotalAmount before redirecting
-                print(session['TotalAmount'])
-                flash(f"Total amount calculated: {total_amount}")
+                total_amount = total_days * price_per_night
+                session['TotalAmount'] = total_amount
+
+                flash(f"Room available! Total amount: ₹{total_amount}")
             else:
-                flash("Room type not found. Please select a valid room type.")
+                flash("Failed to fetch room price. Please try again.")
+                cur.close()
                 return redirect(url_for('room_availability'))
 
             cur.close()
 
         except Exception as e:
-            flash("Database error occurred while fetching room price.")
+            flash("Database error occurred while checking availability.")
             print(f"Error: {e}")
             return redirect(url_for('room_availability'))
 
-        return redirect(url_for('payment'))  # Redirect to payment
+        # ✅ Redirect to payment page
+        return redirect(url_for('payment'))
 
     return render_template('rooms.html')
 
@@ -171,44 +201,81 @@ def payment():
         payment_mode = request.form.get('PaymentMode')
         payment_date = request.form.get('PaymentDate')
         payment_status = request.form.get('PaymentStatus')
-
+        Name=session.get('Name') 
+        CustomerContact=session.get('CustomerContact')
+        Email=session.get('Email')
+        Address=session.get('Address')
+        RoomID=session.get('RoomID')  
+        CheckinDate=session.get('CheckinDate')
+        CheckoutDate=session.get('CheckoutDate')
         # Ensure all required fields are present
         if not amount_paid or not payment_mode or not payment_date or not payment_status:
             flash("Please fill in all payment details.")
             return redirect(url_for('payment'))
 
         try:
+            # ✅ Correct indentation in the `try` block
             cur = mysql.connection.cursor()
-            cur.execute("""
-                CALL Roombooking(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, @confirmation_message)
-            """, (
-                session['Name'], 
-                session['CustomerContact'],
-                session['Email'],
-                session['Address'],
-                session['RoomType'],
-                5,  # Assuming this is some constant related to room booking
-                datetime.date.today(),
-                session['CheckinDate'],
-                session['CheckoutDate'],
-                session['Status'],
+            print(Name,
+                CustomerContact,
+                Email,
+                Address,
+                RoomID,
+                datetime.today().strftime('%Y-%m-%d'),             # ✅ Use parentheses here
+                CheckinDate,
+                CheckoutDate,
+                'Booked',
+                amount_paid,
+                payment_mode,
+                payment_date,
+                payment_status)
+            # ✅ Call the stored procedure without '@' in the parameters
+            query = """
+                            CALL RoomBookingWithPayment(
+                                %s, %s, %s, %s, %s, 
+                                %s, %s, %s, 
+                                %s, %s, %s, %s, %s, 
+                                @confirmation_message
+                            );
+            """
+            
+            params = (
+                Name,
+                CustomerContact,
+                Email,
+                Address,
+                RoomID,
+                datetime.today().strftime('%Y-%m-%d'),  
+                CheckinDate,
+                CheckoutDate,
+                'Booked',
                 amount_paid,
                 payment_mode,
                 payment_date,
                 payment_status
-            ))
+            )
 
+            # ✅ Execute the procedure
+            cur.execute(query, params)
+
+            time.sleep(0.2)  # Optional sleep for MySQL sync
+
+            # ✅ Retrieve confirmation message separately
             cur.execute("SELECT @confirmation_message;")
             confirmation_message = cur.fetchone()[0]
+
+            print("ll",confirmation_message)
             flash(confirmation_message)
 
         except Exception as e:
             flash("An error occurred during payment processing.")
-            print(e)
+            print(f"Error: {e}")
+        
         finally:
             cur.close()
 
-        customer_name = session.get('customer_name')
+        # ✅ Store customer name before clearing the session
+        customer_name = session.get('Name')
         session.clear()  # Clear session after booking confirmation
 
         return f"Thank you, {customer_name}! Your booking is confirmed."
@@ -216,6 +283,7 @@ def payment():
     # Pass total amount to the template for display
     total_amount = session.get('TotalAmount', 0)
     return render_template('payment.html', total_amount=total_amount)
+
 
 
 @app.route('/paymentstatus', methods=['GET', 'POST'])
@@ -315,6 +383,57 @@ def checkroom_availability():
             cur.close()
 
     return render_template('checkroom.html')
+
+@app.route('/checkout', methods=['GET', 'POST'])
+@login_required
+
+def checkout():
+    if request.method == 'POST':
+        booking_id = request.form.get('bookingid')
+
+        cur = mysql.connection.cursor()
+        # Fetch booking details
+        cur.execute("SELECT * FROM bookings WHERE bookingid = %s", (booking_id,))
+        booking = cur.fetchone()
+        cur.close()
+
+        if not booking:
+            flash("No booking found with this ID.", "danger")
+            return redirect(url_for('checkout'))
+
+        return render_template('checkout.html', booking=booking)
+
+    return render_template('checkout.html', booking=None)
+
+@app.route('/confirm_checkout/<int:booking_id>', methods=['POST'])
+@login_required
+def confirm_checkout(booking_id):
+    cur = mysql.connection.cursor()
+
+    # Fetch booking details
+    cur.execute("SELECT checkoutdate FROM bookings WHERE bookingid = %s", (booking_id,))
+    result = cur.fetchone()
+
+    if not result:
+        flash("Invalid booking ID.", "danger")
+        return redirect(url_for('checkout'))
+
+    checkout_date_str = result[0]  # Get checkoutdate from DB
+    checkout_date_str = checkout_date_str.strftime("%Y-%m-%d") 
+    checkout_date = datetime.strptime(checkout_date_str, "%Y-%m-%d").date()
+    current_date = datetime.today().date()
+
+    # If checkout date is greater than the current date, update it
+    if checkout_date > current_date:
+        cur.execute("UPDATE bookings SET checkoutdate = %s WHERE bookingid = %s", (current_date, booking_id))
+
+    # Update status to 'checkedout'
+    cur.execute("UPDATE bookings SET status = 'checkedout' WHERE bookingid = %s", (booking_id,))
+    mysql.connection.commit()
+    cur.close()
+
+    flash("Checkout successful!", "success")
+    return redirect(url_for('checkout'))
 
 
 @app.route('/update/customer', methods=['GET', 'POST'])
